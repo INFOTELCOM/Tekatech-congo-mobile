@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models.dart';
-import '../theme/app_theme.dart';
 import '../widgets/shared.dart';
 import 'contact_screen.dart';
 
