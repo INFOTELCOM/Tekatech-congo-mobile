@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Récupérer le code
+      - name: Recuperer le code
         uses: actions/checkout@v4
 
       - name: Installer Flutter
@@ -19,16 +19,22 @@ jobs:
           flutter-version: '3.24.0'
           channel: 'stable'
 
-      - name: Installer les dépendances Flutter
+      - name: Installer les dependances Flutter
         run: flutter pub get
 
-      - name: Vérifier Flutter
+      - name: Verifier Flutter
         run: flutter doctor -v
 
-      - name: Installer les dépendances iOS
+      - name: Installer les dependances iOS
         run: |
           cd ios
           pod install --repo-update
 
-      - name: Compiler l'application iOS
+      - name: Compiler iOS
         run: flutter build ios --release --no-codesign
+
+      - name: Publier le build iOS
+        uses: actions/upload-artifact@v4
+        with:
+          name: tekatech-congo-ios-build
+          path: build/ios/iphoneos/Runner.app
