@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../data/content.dart';
 import '../theme/app_theme.dart';
 import '../widgets/shared.dart';
 
@@ -47,6 +49,13 @@ class _InterventionTrackingScreenState extends State<InterventionTrackingScreen>
     });
   }
 
+  Future<void> _contactSupport() async {
+    final uri = Uri.parse('mailto:${AppContent.contactEmail}?subject=Suivi%20d%27intervention%20$_reference');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -55,7 +64,7 @@ class _InterventionTrackingScreenState extends State<InterventionTrackingScreen>
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
         children: [
-          const GlowChip(label: 'NOUVEAU · VERSION 1.0.2'),
+          const GlowChip(label: 'NOUVEAU · VERSION 1.1.0'),
           const SizedBox(height: 14),
           Text('Suivez l’avancement de votre intervention.', style: Theme.of(context).textTheme.headlineSmall)
               .animate()
@@ -152,15 +161,34 @@ class _InterventionTrackingScreenState extends State<InterventionTrackingScreen>
                 color: isDark ? AppColors.surfaceDark : AppColors.surface,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.support_agent_rounded, color: AppColors.brand2),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Besoin d’une précision sur votre intervention ? Contactez directement l’équipe TekaTech Congo.',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.support_agent_rounded, color: AppColors.brand2),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Besoin d’une précision sur votre intervention ?',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Contactez directement l’équipe TekaTech Congo en rappelant votre référence.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: _contactSupport,
+                          icon: const Icon(Icons.email_outlined),
+                          label: const Text('Contacter le support'),
                         ),
                       ),
                     ],
