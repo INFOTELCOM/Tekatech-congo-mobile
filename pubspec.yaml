@@ -1,5 +1,5 @@
-name: tekatech_congo_app
-description: "TekaTech Congo — Support IT, réseaux et vidéosurveillance à Brazzaville. Produit numérique d'INFOTELCOM."
+﻿name: tekatech_congo_app
+description: "TekaTech Congo â€” Support IT, rÃ©seaux et vidÃ©osurveillance Ã  Brazzaville. Produit numÃ©rique d'INFOTELCOM."
 publish_to: 'none'
 version: 1.0.1+2
 
@@ -15,7 +15,7 @@ dependencies:
   google_fonts: ^6.2.1
   flutter_animate: ^4.5.2
   shared_preferences: ^2.3.3
-  package_info_plus: ^8.1.1
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
@@ -29,3 +29,4 @@ flutter:
     - assets/images/logo_transparent.png
     - assets/images/logo_mark.png
     - assets/images/app_icon.png
+

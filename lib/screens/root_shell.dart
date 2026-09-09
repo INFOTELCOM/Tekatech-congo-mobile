@@ -12,11 +12,31 @@ import 'more_screen.dart';
 import 'contact_screen.dart';
 
 const _navItems = [
-  NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Accueil'),
-  NavItem(icon: Icons.build_outlined, activeIcon: Icons.build_rounded, label: 'Services'),
-  NavItem(icon: Icons.article_outlined, activeIcon: Icons.article_rounded, label: 'Actus'),
-  NavItem(icon: Icons.dashboard_customize_outlined, activeIcon: Icons.dashboard_customize_rounded, label: 'Espace'),
-  NavItem(icon: Icons.more_horiz_rounded, activeIcon: Icons.more_horiz_rounded, label: 'Plus'),
+  NavItem(
+    icon: Icons.home_outlined,
+    activeIcon: Icons.home_rounded,
+    label: 'Accueil',
+  ),
+  NavItem(
+    icon: Icons.build_outlined,
+    activeIcon: Icons.build_rounded,
+    label: 'Services',
+  ),
+  NavItem(
+    icon: Icons.article_outlined,
+    activeIcon: Icons.article_rounded,
+    label: 'Actus',
+  ),
+  NavItem(
+    icon: Icons.dashboard_customize_outlined,
+    activeIcon: Icons.dashboard_customize_rounded,
+    label: 'Espace',
+  ),
+  NavItem(
+    icon: Icons.more_horiz_rounded,
+    activeIcon: Icons.more_horiz_rounded,
+    label: 'Plus',
+  ),
 ];
 
 /// Coquille principale de l'app : logo en en-tête, navigation flottante
@@ -35,45 +55,55 @@ class _RootShellState extends State<RootShell> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdate();
+    });
   }
 
   Future<void> _checkForUpdate() async {
-    if (!mounted || _updateDialogShown) return;
-    final update = await UpdateChecker.check();
-    if (!mounted || update == null || _updateDialogShown) return;
+    final update = await UpdateChecker.checkForUpdate();
+
+    if (!mounted || update == null || _updateDialogShown) {
+      return;
+    }
 
     _updateDialogShown = true;
+
     await showDialog<void>(
       context: context,
-      barrierDismissible: !update.forceUpdate,
-      builder: (context) => PopScope(
-        canPop: !update.forceUpdate,
-        child: AlertDialog(
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
           title: const Row(
             children: [
               Icon(Icons.system_update_rounded),
               SizedBox(width: 10),
-              Expanded(child: Text('Nouvelle version disponible')),
+              Expanded(
+                child: Text('Nouvelle version disponible'),
+              ),
             ],
           ),
           content: Text(
-            '${update.message}\n\nNouvelle version : ${update.version}',
+            '${update.message}\n\n'
+            'Version disponible : ${update.version}',
           ),
           actions: [
-            if (!update.forceUpdate)
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Plus tard'),
-              ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Plus tard'),
+            ),
             FilledButton.icon(
-              onPressed: () => UpdateChecker.openUpdate(update),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await UpdateChecker.openUpdate(update);
+              },
               icon: const Icon(Icons.download_rounded),
               label: const Text('Mettre à jour'),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -99,14 +129,19 @@ class _RootShellState extends State<RootShell> {
         titleSpacing: 16,
         title: Row(
           children: [
-            Image.asset('assets/images/logo_mark.png', height: 28),
+            Image.asset(
+              'assets/images/logo_mark.png',
+              height: 28,
+            ),
             const SizedBox(width: 10),
             Text(
               'TekaTech Congo',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: isHome ? Colors.white : Theme.of(context).textTheme.titleMedium?.color,
+                color: isHome
+                    ? Colors.white
+                    : Theme.of(context).textTheme.titleMedium?.color,
               ),
             ),
           ],
@@ -116,19 +151,41 @@ class _RootShellState extends State<RootShell> {
             padding: const EdgeInsets.only(right: 8),
             child: Semantics(
               button: true,
-              label: 'Signaler un problème — ouvrir le formulaire de contact',
+              label:
+                  'Signaler un problème — ouvrir le formulaire de contact',
               child: TextButton.icon(
-                onPressed: () => context.pushPage(const ContactScreen()),
-                icon: Icon(Icons.bolt_rounded, size: 18, color: isHome ? Colors.white : AppColors.brand2),
-                label: Text('Signaler', style: TextStyle(color: isHome ? Colors.white : AppColors.brand2)),
+                onPressed: () =>
+                    context.pushPage(const ContactScreen()),
+                icon: Icon(
+                  Icons.bolt_rounded,
+                  size: 18,
+                  color: isHome
+                      ? Colors.white
+                      : AppColors.brand2,
+                ),
+                label: Text(
+                  'Signaler',
+                  style: TextStyle(
+                    color: isHome
+                        ? Colors.white
+                        : AppColors.brand2,
+                  ),
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: IndexedStack(index: _index, children: pages),
+      body: IndexedStack(
+        index: _index,
+        children: pages,
+      ),
       floatingActionButton: const WhatsappFab(),
-      bottomNavigationBar: FloatingNavBar(currentIndex: _index, items: _navItems, onTap: _goToTab),
+      bottomNavigationBar: FloatingNavBar(
+        currentIndex: _index,
+        items: _navItems,
+        onTap: _goToTab,
+      ),
     );
   }
 }
