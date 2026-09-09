@@ -15,6 +15,15 @@ import 'legal/confidentialite_screen.dart';
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
+  static const String _websiteUrl = 'https://teka-tech-congo.netlify.app/';
+
+  Future<void> _openWebsite() async {
+    final uri = Uri.parse(_websiteUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -50,6 +59,15 @@ class MoreScreen extends StatelessWidget {
           subtitle: 'Demander une intervention ou un devis',
           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ContactScreen())),
         ),
+        _MenuTile(
+          icon: Icons.language_rounded,
+          title: 'Visiter le site TekaTech Congo',
+          subtitle: 'Consulter le site officiel et les informations détaillées',
+          onTap: () {
+            HapticFeedback.selectionClick();
+            _openWebsite();
+          },
+        ),
         const SizedBox(height: 24),
         Text('Coordonnées', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
@@ -74,6 +92,9 @@ class MoreScreen extends StatelessWidget {
               const Divider(height: 26),
               _ContactRow(icon: Icons.email_rounded, label: 'E-mail', value: AppContent.contactEmail,
                   onTap: () => launchUrl(Uri.parse('mailto:${AppContent.contactEmail}'))),
+              const Divider(height: 26),
+              _ContactRow(icon: Icons.language_rounded, label: 'Site web', value: 'teka-tech-congo.netlify.app',
+                  onTap: _openWebsite),
               const Divider(height: 26),
               const _ContactRow(icon: Icons.location_on_rounded, label: "Zone d'intervention", value: 'Brazzaville et environs'),
             ],
