@@ -1,7 +1,7 @@
 name: tekatech_congo_app
-description: "TekaTech Congo â€” Support IT, rÃ©seaux et vidÃ©osurveillance Ã  Brazzaville. Produit numÃ©rique d'INFOTELCOM."
+description: "TekaTech Congo — Support IT, réseaux et vidéosurveillance à Brazzaville. Produit numérique d'INFOTELCOM."
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
