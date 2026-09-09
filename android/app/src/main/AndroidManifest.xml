@@ -6,7 +6,7 @@
     <application
         android:label="TekaTech Congo"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@drawable/tekatech_launcher">
 
         <activity
             android:name=".MainActivity"
