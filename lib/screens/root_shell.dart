@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../widgets/floating_nav_bar.dart';
 import '../widgets/whatsapp_fab.dart';
 import '../widgets/page_transitions.dart';
+import '../services/update_checker.dart';
 import 'home_screen.dart';
 import 'services_screen.dart';
 import 'news_screen.dart';
@@ -29,6 +30,52 @@ class RootShell extends StatefulWidget {
 
 class _RootShellState extends State<RootShell> {
   int _index = 0;
+  bool _updateDialogShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
+  }
+
+  Future<void> _checkForUpdate() async {
+    if (!mounted || _updateDialogShown) return;
+    final update = await UpdateChecker.check();
+    if (!mounted || update == null || _updateDialogShown) return;
+
+    _updateDialogShown = true;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !update.forceUpdate,
+      builder: (context) => PopScope(
+        canPop: !update.forceUpdate,
+        child: AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.system_update_rounded),
+              SizedBox(width: 10),
+              Expanded(child: Text('Nouvelle version disponible')),
+            ],
+          ),
+          content: Text(
+            '${update.message}\n\nNouvelle version : ${update.version}',
+          ),
+          actions: [
+            if (!update.forceUpdate)
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Plus tard'),
+              ),
+            FilledButton.icon(
+              onPressed: () => UpdateChecker.openUpdate(update),
+              icon: const Icon(Icons.download_rounded),
+              label: const Text('Mettre à jour'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _goToTab(int i) => setState(() => _index = i);
 
