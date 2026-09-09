@@ -19,7 +19,7 @@ class UpdateInfo {
 
 class UpdateChecker {
   static const String _manifestUrl =
-      'https://teka-tech-congo.netlify.app/app-version.json';
+      'https://tekatech-congo.netlify.app/app-version.json';
 
   static Future<UpdateInfo?> checkForUpdate() async {
     try {
@@ -34,7 +34,8 @@ class UpdateChecker {
         return null;
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final body = response.body.replaceFirst('\uFEFF', '').trim();
+      final data = jsonDecode(body) as Map<String, dynamic>;
 
       final platform = defaultTargetPlatform == TargetPlatform.iOS
           ? 'ios'
@@ -66,8 +67,9 @@ class UpdateChecker {
         url: url,
         message: message,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Erreur vérification mise à jour : $e');
+      debugPrintStack(stackTrace: stackTrace);
       return null;
     }
   }
