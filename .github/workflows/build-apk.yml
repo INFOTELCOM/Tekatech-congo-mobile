@@ -7,6 +7,9 @@ on:
     branches: [main, master, release/1.1.0]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,6 +28,18 @@ jobs:
 
       - name: Compiler l'APK (release)
         run: flutter build apk --release
+
+      - name: Publier l'APK dans release-assets
+        if: "!contains(github.event.head_commit.message, '[release-assets]')"
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //; s/+.*//')
+          cp build/app/outputs/flutter-apk/app-release.apk "release-assets/TekaTech-Congo-Mobile-${VERSION}.apk"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "release-assets/TekaTech-Congo-Mobile-${VERSION}.apk"
+          git diff --cached --quiet && exit 0
+          git commit -m "build: publish Android ${VERSION} APK [release-assets]"
+          git push
 
       - name: Publier l'APK généré
         uses: actions/upload-artifact@v4
