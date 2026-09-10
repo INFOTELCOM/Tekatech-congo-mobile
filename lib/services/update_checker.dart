@@ -26,11 +26,27 @@ class UpdateChecker {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
 
+      // Cache-busting: on force une lecture fraîche du manifeste distant.
+      final uri = Uri.parse(_manifestUrl).replace(
+        queryParameters: {
+          'v': DateTime.now().millisecondsSinceEpoch.toString(),
+        },
+      );
+
       final response = await http
-          .get(Uri.parse(_manifestUrl))
+          .get(
+            uri,
+            headers: const {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+          )
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
+        debugPrint(
+          'Vérification mise à jour: HTTP ${response.statusCode}',
+        );
         return null;
       }
 
@@ -44,6 +60,7 @@ class UpdateChecker {
       final platformData = data[platform];
 
       if (platformData is! Map<String, dynamic>) {
+        debugPrint('Vérification mise à jour: bloc $platform absent.');
         return null;
       }
 
@@ -51,12 +68,16 @@ class UpdateChecker {
       final url = platformData['url']?.toString();
 
       if (latestVersion == null || url == null) {
+        debugPrint('Vérification mise à jour: manifeste incomplet.');
         return null;
       }
 
-      final message =
-          data['message']?.toString() ??
+      final message = data['message']?.toString() ??
           'Une nouvelle version de TekaTech Congo est disponible.';
+
+      debugPrint(
+        'Vérification mise à jour: installée=$currentVersion, disponible=$latestVersion',
+      );
 
       if (!_isNewerVersion(latestVersion, currentVersion)) {
         return null;
@@ -112,7 +133,10 @@ class UpdateChecker {
   static List<int> _parseVersion(String version) {
     return version
         .split('.')
-        .map((part) => int.tryParse(part.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
+        .map(
+          (part) =>
+              int.tryParse(part.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+        )
         .toList();
   }
 }
