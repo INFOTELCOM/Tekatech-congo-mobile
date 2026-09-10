@@ -18,12 +18,24 @@ class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
   static const String _websiteUrl = 'https://teka-tech-congo.netlify.app/';
+  static const String _manifestUrl = 'https://tekatech-congo.netlify.app/app-version.json';
 
   Future<void> _openWebsite() async {
     final uri = Uri.parse(_websiteUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  Future<void> _copyWebsite(BuildContext context) async {
+    await Clipboard.setData(const ClipboardData(text: _websiteUrl));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Lien du site copié.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _checkForUpdate(BuildContext context) async {
@@ -73,20 +85,66 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _showDiagnostics(BuildContext context) async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.health_and_safety_outlined),
+            SizedBox(width: 10),
+            Expanded(child: Text('Diagnostic de l’application')),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _DiagnosticLine(label: 'Application', value: 'TekaTech Congo'),
+            _DiagnosticLine(label: 'Version', value: packageInfo.version),
+            _DiagnosticLine(label: 'Build', value: packageInfo.buildNumber),
+            _DiagnosticLine(label: 'Plateforme', value: packageInfo.packageName),
+            const SizedBox(height: 8),
+            const Text(
+              'Mises à jour : vérification automatique + vérification manuelle.',
+              style: TextStyle(color: AppColors.inkSoft),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Manifeste distant :\ntekatech-congo.netlify.app/app-version.json',
+              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showWhatsNew(BuildContext context) async {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Nouveautés 1.1.3'),
+        title: const Text('Nouveautés 1.1.4'),
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('• Vérification des mises à jour plus fiable.'),
+            Text('• Centre de mise à jour renforcé et vérification manuelle.'),
             SizedBox(height: 10),
-            Text('• Bouton « Vérifier les mises à jour » dans l’espace Plus.'),
+            Text('• Nouveau diagnostic de l’application et des informations de build.'),
             SizedBox(height: 10),
-            Text('• Affichage de la version installée et amélioration du diagnostic.'),
+            Text('• Accès rapide au site officiel et copie du lien.'),
+            SizedBox(height: 10),
+            Text('• Interface Plus améliorée pour mieux gérer les outils et informations.'),
           ],
         ),
         actions: [
@@ -113,6 +171,7 @@ class MoreScreen extends StatelessWidget {
         _AppVersionCard(
           onCheckUpdate: () => _checkForUpdate(context),
           onShowWhatsNew: () => _showWhatsNew(context),
+          onShowDiagnostics: () => _showDiagnostics(context),
         ),
         const SizedBox(height: 8),
         _MenuTile(
@@ -147,6 +206,12 @@ class MoreScreen extends StatelessWidget {
             HapticFeedback.selectionClick();
             _openWebsite();
           },
+        ),
+        _MenuTile(
+          icon: Icons.copy_rounded,
+          title: 'Copier le lien du site',
+          subtitle: 'Partager facilement l’adresse officielle',
+          onTap: () => _copyWebsite(context),
         ),
         const SizedBox(height: 24),
         Text('Coordonnées', style: Theme.of(context).textTheme.titleLarge),
@@ -206,13 +271,39 @@ class MoreScreen extends StatelessWidget {
   }
 }
 
+class _DiagnosticLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DiagnosticLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 88,
+            child: Text(label, style: const TextStyle(color: AppColors.inkSoft, fontSize: 12.5)),
+          ),
+          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),
+        ],
+      ),
+    );
+  }
+}
+
 class _AppVersionCard extends StatelessWidget {
   final VoidCallback onCheckUpdate;
   final VoidCallback onShowWhatsNew;
+  final VoidCallback onShowDiagnostics;
 
   const _AppVersionCard({
     required this.onCheckUpdate,
     required this.onShowWhatsNew,
+    required this.onShowDiagnostics,
   });
 
   Future<PackageInfo> _loadPackageInfo() => PackageInfo.fromPlatform();
@@ -222,7 +313,7 @@ class _AppVersionCard extends StatelessWidget {
     return FutureBuilder<PackageInfo>(
       future: _loadPackageInfo(),
       builder: (context, snapshot) {
-        final version = snapshot.data?.version ?? '1.1.3';
+        final version = snapshot.data?.version ?? '1.1.4';
 
         return Card(
           child: Padding(
@@ -259,9 +350,16 @@ class _AppVersionCard extends StatelessWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.new_releases_outlined, color: AppColors.brand2),
-                  title: const Text('Nouveautés 1.1.3'),
+                  title: const Text('Nouveautés 1.1.4'),
                   subtitle: const Text('Voir ce qui change dans cette version'),
                   onTap: onShowWhatsNew,
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.health_and_safety_outlined, color: AppColors.brand2),
+                  title: const Text('Diagnostic'),
+                  subtitle: const Text('Version, build et état du système de mise à jour'),
+                  onTap: onShowDiagnostics,
                 ),
               ],
             ),
