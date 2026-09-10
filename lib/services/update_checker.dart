@@ -20,13 +20,14 @@ class UpdateInfo {
 class UpdateChecker {
   static const String _manifestUrl =
       'https://tekatech-congo.netlify.app/app-version.json';
+  static const String _fallbackUpdateUrl =
+      'https://tekatech-congo.netlify.app/applications.html';
 
   static Future<UpdateInfo?> checkForUpdate() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
 
-      // Cache-busting: on force une lecture fraîche du manifeste distant.
       final uri = Uri.parse(_manifestUrl).replace(
         queryParameters: {
           'v': DateTime.now().millisecondsSinceEpoch.toString(),
@@ -98,11 +99,32 @@ class UpdateChecker {
   static Future<void> openUpdate(UpdateInfo update) async {
     final uri = Uri.parse(update.url);
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(
+    try {
+      // Ne pas bloquer sur canLaunchUrl(): sur certains appareils Android,
+      // cette vérification peut retourner false alors que launchUrl() fonctionne.
+      final launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
       );
+
+      if (launched) {
+        return;
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Ouverture de la mise à jour impossible : $e');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+
+    // Secours : ouvrir la page Applications si le téléchargement direct
+    // n'est pas pris en charge par le navigateur/appareil.
+    try {
+      await launchUrl(
+        Uri.parse(_fallbackUpdateUrl),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('Ouverture de la page de secours impossible : $e');
+      debugPrintStack(stackTrace: stackTrace);
     }
   }
 
