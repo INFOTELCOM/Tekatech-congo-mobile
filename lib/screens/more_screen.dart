@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/content.dart';
 import '../main.dart';
+import '../services/update_checker.dart';
 import '../theme/app_theme.dart';
 import 'about_screen.dart';
 import 'faq_screen.dart';
@@ -24,6 +26,79 @@ class MoreScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _checkForUpdate(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final update = await UpdateChecker.checkForUpdate();
+
+    if (!context.mounted) return;
+
+    if (update == null) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('TekaTech Congo est à jour.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.system_update_rounded),
+            SizedBox(width: 10),
+            Expanded(child: Text('Nouvelle version disponible')),
+          ],
+        ),
+        content: Text(
+          '${update.message}\n\nVersion disponible : ${update.version}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Plus tard'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await UpdateChecker.openUpdate(update);
+            },
+            icon: const Icon(Icons.download_rounded),
+            label: const Text('Mettre à jour'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showWhatsNew(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Nouveautés 1.1.3'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('• Vérification des mises à jour plus fiable.'),
+            SizedBox(height: 10),
+            Text('• Bouton « Vérifier les mises à jour » dans l’espace Plus.'),
+            SizedBox(height: 10),
+            Text('• Affichage de la version installée et amélioration du diagnostic.'),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Compris'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -34,6 +109,11 @@ class MoreScreen extends StatelessWidget {
         Text('Plus', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 16),
         _ThemeToggle(),
+        const SizedBox(height: 8),
+        _AppVersionCard(
+          onCheckUpdate: () => _checkForUpdate(context),
+          onShowWhatsNew: () => _showWhatsNew(context),
+        ),
         const SizedBox(height: 8),
         _MenuTile(
           icon: Icons.bolt_rounded,
@@ -122,6 +202,72 @@ class MoreScreen extends StatelessWidget {
               style: TextStyle(color: AppColors.inkSoft, fontSize: 11.5)),
         ),
       ],
+    );
+  }
+}
+
+class _AppVersionCard extends StatelessWidget {
+  final VoidCallback onCheckUpdate;
+  final VoidCallback onShowWhatsNew;
+
+  const _AppVersionCard({
+    required this.onCheckUpdate,
+    required this.onShowWhatsNew,
+  });
+
+  Future<PackageInfo> _loadPackageInfo() => PackageInfo.fromPlatform();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: _loadPackageInfo(),
+      builder: (context, snapshot) {
+        final version = snapshot.data?.version ?? '1.1.3';
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0x141E63FF),
+                      child: Icon(Icons.verified_rounded, color: AppColors.brand2),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('TekaTech Congo', style: TextStyle(fontWeight: FontWeight.w800)),
+                          Text('Version installée : $version', style: const TextStyle(color: AppColors.inkSoft)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.system_update_rounded, color: AppColors.brand2),
+                  title: const Text('Vérifier les mises à jour'),
+                  subtitle: const Text('Tester immédiatement le manifeste distant'),
+                  onTap: onCheckUpdate,
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.new_releases_outlined, color: AppColors.brand2),
+                  title: const Text('Nouveautés 1.1.3'),
+                  subtitle: const Text('Voir ce qui change dans cette version'),
+                  onTap: onShowWhatsNew,
+                ),
+              ],
+            ),
+          ),
+        ).animate().fadeIn(duration: 280.ms);
+      },
     );
   }
 }
