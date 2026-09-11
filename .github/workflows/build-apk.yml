@@ -32,8 +32,22 @@ jobs:
           test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "Secret ANDROID_KEYSTORE_PASSWORD manquant"; exit 1; }
           test -n "$ANDROID_KEY_ALIAS" || { echo "Secret ANDROID_KEY_ALIAS manquant"; exit 1; }
           test -n "$ANDROID_KEY_PASSWORD" || { echo "Secret ANDROID_KEY_PASSWORD manquant"; exit 1; }
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+
+          # Normaliser le secret Base64 (espaces/retours ligne éventuels).
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" \
+            | tr -d '[:space:]' \
+            | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+
           test -s "$ANDROID_KEYSTORE_PATH"
+
+          # Vérifier que le fichier décodé est bien un keystore Java exploitable.
+          keytool -list \
+            -keystore "$ANDROID_KEYSTORE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" \
+            -noprompt > /dev/null
+
+          echo "Keystore release valide et accessible."
 
       - name: Installer Flutter
         uses: subosito/flutter-action@v2
