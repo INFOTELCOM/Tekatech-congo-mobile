@@ -2,6 +2,7 @@ name: Build Android APK
 
 # Se déclenche à chaque envoi sur la branche principale, ou manuellement
 # depuis l'onglet "Actions" du dépôt GitHub.
+# Android signing diagnostic trigger.
 on:
   push:
     branches: [main, master, release/1.1.0]
@@ -44,7 +45,6 @@ jobs:
           test -s "$ANDROID_KEYSTORE_PATH" || { echo "❌ Le keystore décodé est vide"; exit 1; }
           echo "✅ Keystore décodé : $(stat -c%s "$ANDROID_KEYSTORE_PATH") octets"
 
-          # 1) Vérifier d'abord le mot de passe du keystore et afficher les alias disponibles.
           if ! keytool -list -keystore "$ANDROID_KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/keystore-list.txt" 2> "$RUNNER_TEMP/keytool-store.err"; then
             echo "❌ ANDROID_KEYSTORE_PASSWORD est incorrect (ou le fichier n'est pas un keystore Java valide)."
             cat "$RUNNER_TEMP/keytool-store.err"
@@ -55,7 +55,6 @@ jobs:
           echo "ℹ️ Alias présents dans le keystore :"
           grep -E '^[[:space:]]*[A-Za-z0-9_.-]+, ' "$RUNNER_TEMP/keystore-list.txt" | head -20 || true
 
-          # 2) Vérifier que l'alias fourni existe.
           if ! keytool -list \
             -keystore "$ANDROID_KEYSTORE_PATH" \
             -storepass "$ANDROID_KEYSTORE_PASSWORD" \
